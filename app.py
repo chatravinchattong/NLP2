@@ -1,6 +1,6 @@
 import os
 import streamlit as st
-from langchain_community.document_loaders import DirectoryLoader, TextLoader, PyPDFLoader
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-# 1. จัดการ API Key และตั้งค่า Environment Variable ให้ Google SDK
+# 1. จัดการ API Key
 gemini_api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
 
 if gemini_api_key:
@@ -18,7 +18,7 @@ if gemini_api_key:
 st.set_page_config(page_title="ระบบแนะนำสถานที่ท่องเที่ยว", page_icon="✈️")
 st.title("✈️ ระบบแนะนำสถานที่ท่องเที่ยว")
 
-# 2. ฟังก์ชันช่วยสร้าง Vector Store
+# 2. ฟังก์ชันโหลด Vector Store
 @st.cache_resource
 def load_vector_store():
     docs_path = "./docs"
@@ -36,7 +36,7 @@ def load_vector_store():
 
 vector_store = load_vector_store()
 
-# 3. จัดการ Session State สำหรับประวัติแชท
+# 3. ประวัติแชท
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -44,15 +44,13 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 4. รับคำถามจากผู้ใช้
-if user_query := st.chat_input("พิมพ์คำถามการท่องเที่ยวของคุณที่นี่ (เช่น ขอแพลนเที่ยวเชียงใหม่ 3 วัน 2 คืน)..."):
+# 4. รับคำถาม
+if user_query := st.chat_input("พิมพ์คำถามการท่องเที่ยวของคุณที่นี่..."):
     
-    # เช็ค API Key
     if not gemini_api_key:
         st.error("กรุณาตั้งค่า GEMINI_API_KEY ใน Streamlit Secrets ก่อนใช้งาน")
         st.stop()
 
-    # เช็ค Vector Store
     if vector_store is None:
         st.error("กรุณาเพิ่มไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs ก่อนถามคำถาม")
         st.stop()
@@ -73,7 +71,7 @@ Context:
 คำตอบ:"""
     prompt = ChatPromptTemplate.from_template(prompt_template)
 
-    # เรียกใช้ Google Gemini Model (ระบุเป็น gemini-2.0-flash หรือ models/gemini-1.5-flash)
+    # แก้ไขชื่อโมเดลเป็น gemini-2.0-flash
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         google_api_key=gemini_api_key,
