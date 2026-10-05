@@ -20,12 +20,13 @@ with st.sidebar:
     st.header("⚙️ ตั้งค่าและจัดการระบบ")
     
     # ดึง API Key จาก Secrets ของ Streamlit
-    gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
-    if not gemini_api_key:
-        st.error("❌ ไม่พบ GEMINI_API_KEY ใน st.secrets")
-        st.info("💡 เมื่อเอาขึ้น Streamlit Cloud ให้ไปที่ Advanced Settings -> Secrets แล้วใส่:\nGEMINI_API_KEY = \"AQ.Ab8RN6Iu...\"")
-    else:
+    gemini_api_key = st.secrets.get("GEMINI_API_KEY", "") or st.secrets.get("GOOGLE_API_KEY", "")
+    if gemini_api_key:
+        os.environ["GOOGLE_API_KEY"] = gemini_api_key
         st.success("✅ เชื่อมต่อ GEMINI_API_KEY สำเร็จ")
+    else:
+        st.error("❌ ไม่พบ GEMINI_API_KEY ใน st.secrets")
+        st.info("💡 เมื่อเอาขึ้น Streamlit Cloud ให้ไปที่ Settings -> Secrets แล้วใส่:\nGEMINI_API_KEY = \"AIzaSy...\"")
 
     st.markdown("---")
     st.subheader("📁 ข้อมูลเอกสารในคลัง")
@@ -138,16 +139,12 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})
     retrieved_docs = retriever.invoke(user_query)
 
-    api_key = st.secrets.get("GEMINI_API_KEY", "") or st.secrets.get("GOOGLE_API_KEY", "")
-    if api_key:
-        os.environ["GOOGLE_API_KEY"] = api_key
-
     # เรียกใช้ Google Gemini 1.5 Flash Model
     llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
-    api_key=api_key,
-    temperature=0.2
-)
+        model="gemini-1.5-flash",
+        api_key=gemini_api_key,
+        temperature=0.2
+    )
 
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
