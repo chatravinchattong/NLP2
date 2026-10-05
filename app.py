@@ -140,7 +140,7 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
 
     api_key = st.secrets.get("GEMINI_API_KEY", "") or st.secrets.get("GOOGLE_API_KEY", "")
     if api_key:
-    os.environ["GOOGLE_API_KEY"] = api_key
+        os.environ["GOOGLE_API_KEY"] = api_key
     
     # เรียกใช้ Google Gemini 1.5 Flash Model
     llm = ChatGoogleGenerativeAI(
