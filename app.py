@@ -142,8 +142,7 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
     # เรียกใช้ Google Gemini 1.5 Flash Model
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
-        api_key=gemini_api_key,
-        temperature=0.2
+        google_api_key=api_key
     )
 
     def format_docs(docs):
