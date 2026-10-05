@@ -139,6 +139,11 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})
     retrieved_docs = retriever.invoke(user_query)
 
+
+    if not gemini_api_key:
+        st.error("กรุณาตั้งค่า GEMINI_API_KEY ก่อนใช้งาน")
+        st.stop()
+    
     # เรียกใช้ Google Gemini 1.5 Flash Model
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
