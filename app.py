@@ -18,7 +18,7 @@ if gemini_api_key:
 st.set_page_config(page_title="ระบบแนะนำสถานที่ท่องเที่ยว", page_icon="✈️")
 st.title("✈️ ระบบแนะนำสถานที่ท่องเที่ยว")
 
-# 2. ฟังก์ชันโหลด Vector Store
+# 2. ฟังก์ชันช่วยสร้าง Vector Store
 @st.cache_resource
 def load_vector_store():
     docs_path = "./docs"
@@ -36,7 +36,7 @@ def load_vector_store():
 
 vector_store = load_vector_store()
 
-# 3. ประวัติแชท
+# 3. จัดการ Session State ประวัติแชท
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -44,13 +44,15 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 4. รับคำถาม
+# 4. รับคำถามจากผู้ใช้
 if user_query := st.chat_input("พิมพ์คำถามการท่องเที่ยวของคุณที่นี่..."):
     
+    # เช็ค API Key
     if not gemini_api_key:
         st.error("กรุณาตั้งค่า GEMINI_API_KEY ใน Streamlit Secrets ก่อนใช้งาน")
         st.stop()
 
+    # เช็ค Vector Store
     if vector_store is None:
         st.error("กรุณาเพิ่มไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs ก่อนถามคำถาม")
         st.stop()
@@ -71,10 +73,10 @@ Context:
 คำตอบ:"""
     prompt = ChatPromptTemplate.from_template(prompt_template)
 
-    # แก้ไขชื่อโมเดลเป็น gemini-2.0-flash
+    # เรียกใช้ ChatGoogleGenerativeAI แบบระบุ Parameter ชัดเจน
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
-        google_api_key=gemini_api_key,
+        api_key=gemini_api_key,
         temperature=0.3
     )
 
