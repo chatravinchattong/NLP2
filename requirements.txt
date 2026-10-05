@@ -1,8 +1,9 @@
 streamlit
 langchain
 langchain-community
-langchain-groq
 langchain-huggingface
+langchain-google-genai
 faiss-cpu
-pypdf
 sentence-transformers
+pypdf
+unstructured
