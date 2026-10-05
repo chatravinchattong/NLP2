@@ -20,7 +20,7 @@ with st.sidebar:
     st.header("⚙️ ตั้งค่าและจัดการระบบ")
     
     # ดึง API Key จาก Secrets ของ Streamlit
-    gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
+    gemini_api_key = st.secrets("GEMINI_API_KEY", "")
     if not gemini_api_key:
         st.error("❌ ไม่พบ GEMINI_API_KEY ใน st.secrets")
         st.info("💡 เมื่อเอาขึ้น Streamlit Cloud ให้ไปที่ Advanced Settings -> Secrets แล้วใส่:\nGEMINI_API_KEY = \"AQ.Ab8RN6Iu...\"")
@@ -140,7 +140,7 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
 
     # เรียกใช้ Google Gemini 1.5 Flash Model
     llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
+        model="gemini-1.5-flash",
         google_api_key=gemini_api_key,
         temperature=0.2
     )
