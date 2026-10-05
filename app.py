@@ -18,7 +18,7 @@ if gemini_api_key:
 st.set_page_config(page_title="ระบบแนะนำสถานที่ท่องเที่ยว", page_icon="✈️")
 st.title("✈️ ระบบแนะนำสถานที่ท่องเที่ยว")
 
-# 2. ฟังก์ชันโหลดและสร้าง Vector Store (ใช้ @st.cache_resource เพื่อประหยัด CPU/Memory)
+# 2. ฟังก์ชันช่วยสร้าง Vector Store (ใช้ @st.cache_resource เพื่อประหยัด CPU/Memory)
 @st.cache_resource
 def load_vector_store():
     docs_path = "./docs"
@@ -39,7 +39,12 @@ def load_vector_store():
 
 vector_store = load_vector_store()
 
-# 3. จัดการ Session State สำหรับบันทึกประวัติการสนทนา
+# 3. ตรวจสอบ Vector Store ทันทีที่โหลดหน้าเว็บ (หากไม่มีไฟล์ในโฟลเดอร์ docs จะขึ้นเตือน)
+if vector_store is None:
+    st.error("กรุณาเพิ่มไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs ก่อนถามคำถาม")
+    st.stop()
+
+# 4. จัดการ Session State สำหรับประวัติแชท
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -48,17 +53,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 4. รับคำถามจากผู้ใช้ผ่าน Chat Input
+# 5. รับคำถามจากผู้ใช้ผ่าน Chat Input
 if user_query := st.chat_input("พิมพ์คำถามการท่องเที่ยวของคุณที่นี่ (เช่น ขอแพลนเที่ยวเชียงใหม่ 3 วัน 2 คืน)..."):
     
     # ตรวจสอบ API Key ก่อนประมวลผล
     if not gemini_api_key:
         st.error("กรุณาตั้งค่า GEMINI_API_KEY ใน Streamlit Secrets ก่อนใช้งาน")
-        st.stop()
-        
-    # ตรวจสอบว่ามี Vector Store หรือยัง
-    if vector_store is None:
-        st.error("กรุณาเพิ่มไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs ก่อนถามคำถาม")
         st.stop()
 
     # แสดงคำถามของผู้ใช้บน UI และบันทึกลง Session State
@@ -66,7 +66,7 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
     with st.chat_message("user"):
         st.markdown(user_query)
 
-    # สร้าง Retriever จาก Vector Store
+    # กำหนด Retriever
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
     # กำหนด Prompt Template สำหรับ RAG
