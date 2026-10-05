@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-# 1. จัดการ API Key และตั้งค่า Environment Variable ให้ Google SDK รู้จักโดยอัตโนมัติ
+# 1. จัดการ API Key และตั้งค่า Environment Variable ให้ Google SDK รู้จัก
 gemini_api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
 
 if gemini_api_key:
@@ -39,12 +39,7 @@ def load_vector_store():
 
 vector_store = load_vector_store()
 
-# 3. ตรวจสอบ Vector Store ทันทีที่โหลดหน้าเว็บ (หากไม่มีไฟล์ในโฟลเดอร์ docs จะขึ้นเตือน)
-if vector_store is None:
-    st.error("กรุณาเพิ่มไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs ก่อนถามคำถาม")
-    st.stop()
-
-# 4. จัดการ Session State สำหรับประวัติแชท
+# 3. จัดการ Session State สำหรับประวัติแชท
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
@@ -53,15 +48,20 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 5. รับคำถามจากผู้ใช้ผ่าน Chat Input
+# 4. รับคำถามจากผู้ใช้ผ่าน Chat Input
 if user_query := st.chat_input("พิมพ์คำถามการท่องเที่ยวของคุณที่นี่ (เช่น ขอแพลนเที่ยวเชียงใหม่ 3 วัน 2 คืน)..."):
     
-    # ตรวจสอบ API Key ก่อนประมวลผล
+    # เช็ค API Key
     if not gemini_api_key:
         st.error("กรุณาตั้งค่า GEMINI_API_KEY ใน Streamlit Secrets ก่อนใช้งาน")
         st.stop()
 
-    # แสดงคำถามของผู้ใช้บน UI และบันทึกลง Session State
+    # เช็ค Vector Store (เมื่อผู้ใช้ส่งคำถามเข้ามา)
+    if vector_store is None:
+        st.error("กรุณาเพิ่มไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs ก่อนถามคำถาม")
+        st.stop()
+
+    # เริ่มกระบวนการแสดงคำถามของผู้ใช้
     st.session_state.messages.append({"role": "user", "content": user_query})
     with st.chat_message("user"):
         st.markdown(user_query)
