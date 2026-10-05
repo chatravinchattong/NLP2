@@ -9,7 +9,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 
-# 1. จัดการ API Key และตั้งค่า Environment Variable ให้ Google SDK รู้จัก
+# 1. จัดการ API Key และตั้งค่า Environment Variable ให้ Google SDK
 gemini_api_key = st.secrets.get("GEMINI_API_KEY") or os.getenv("GEMINI_API_KEY")
 
 if gemini_api_key:
@@ -18,22 +18,19 @@ if gemini_api_key:
 st.set_page_config(page_title="ระบบแนะนำสถานที่ท่องเที่ยว", page_icon="✈️")
 st.title("✈️ ระบบแนะนำสถานที่ท่องเที่ยว")
 
-# 2. ฟังก์ชันช่วยสร้าง Vector Store (ใช้ @st.cache_resource เพื่อประหยัด CPU/Memory)
+# 2. ฟังก์ชันช่วยสร้าง Vector Store
 @st.cache_resource
 def load_vector_store():
     docs_path = "./docs"
     if not os.path.exists(docs_path) or not os.listdir(docs_path):
         return None
     
-    # อ่านไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs
     loader = DirectoryLoader(docs_path, glob="**/*.txt", loader_cls=TextLoader)
     documents = loader.load()
     
-    # แบ่งข้อความออกเป็นส่วนๆ (Chunks)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     docs = text_splitter.split_documents(documents)
     
-    # ใช้ HuggingFace Embeddings
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     return FAISS.from_documents(docs, embeddings)
 
@@ -43,12 +40,11 @@ vector_store = load_vector_store()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# แสดงประวัติการสนทนาเดิมบนหน้าจอ
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-# 4. รับคำถามจากผู้ใช้ผ่าน Chat Input
+# 4. รับคำถามจากผู้ใช้
 if user_query := st.chat_input("พิมพ์คำถามการท่องเที่ยวของคุณที่นี่ (เช่น ขอแพลนเที่ยวเชียงใหม่ 3 วัน 2 คืน)..."):
     
     # เช็ค API Key
@@ -56,20 +52,17 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
         st.error("กรุณาตั้งค่า GEMINI_API_KEY ใน Streamlit Secrets ก่อนใช้งาน")
         st.stop()
 
-    # เช็ค Vector Store (เมื่อผู้ใช้ส่งคำถามเข้ามา)
+    # เช็ค Vector Store
     if vector_store is None:
         st.error("กรุณาเพิ่มไฟล์เอกสารข้อมูลท่องเที่ยว (.txt) ในโฟลเดอร์ docs ก่อนถามคำถาม")
         st.stop()
 
-    # เริ่มกระบวนการแสดงคำถามของผู้ใช้
     st.session_state.messages.append({"role": "user", "content": user_query})
     with st.chat_message("user"):
         st.markdown(user_query)
 
-    # กำหนด Retriever
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})
 
-    # กำหนด Prompt Template สำหรับ RAG
     prompt_template = """คุณเป็นผู้ช่วยแนะนำสถานที่ท่องเที่ยวที่สุภาพ รอบรู้ และให้ข้อมูลที่แม่นยำ 
 จงตอบคำถามโดยใช้ข้อมูลจาก Context ที่กำหนดให้เท่านั้น หากไม่มีข้อมูลใน Context ให้ตอบตามความจริงว่าไม่พบข้อมูลในระบบ
 
@@ -80,18 +73,16 @@ Context:
 คำตอบ:"""
     prompt = ChatPromptTemplate.from_template(prompt_template)
 
-    # เรียกใช้ Google Gemini Model
+    # เรียกใช้ Google Gemini Model (ระบุเป็น gemini-2.0-flash หรือ models/gemini-1.5-flash)
     llm = ChatGoogleGenerativeAI(
         model="gemini-2.0-flash",
         google_api_key=gemini_api_key,
         temperature=0.3
     )
 
-    # ฟังก์ชันแปลง Document ให้เป็นข้อความยาวสำหรับใส่ใน Prompt
     def format_docs(docs):
         return "\n\n".join(doc.page_content for doc in docs)
 
-    # รวม RAG Chain ด้วย LangChain Expression Language (LCEL)
     rag_chain = (
         {"context": retriever | format_docs, "question": RunnablePassthrough()}
         | prompt
@@ -99,7 +90,6 @@ Context:
         | StrOutputParser()
     )
 
-    # ประมวลผลและแสดงคำตอบของระบบ
     with st.chat_message("assistant"):
         with st.spinner("กำลังค้นหาข้อมูลสถานที่ท่องเที่ยว..."):
             response = rag_chain.invoke(user_query)
