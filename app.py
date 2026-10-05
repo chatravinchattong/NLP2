@@ -140,7 +140,7 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
 
     # เรียกใช้ Google Gemini 1.5 Flash Model
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
         google_api_key=gemini_api_key,
         temperature=0.2
     )
