@@ -12,7 +12,7 @@ from langchain_core.output_parsers import StrOutputParser
 # 1. ตั้งค่าหน้าตา Streamlit Web Application
 st.set_page_config(page_title="ผู้ช่วยแนะนำการท่องเที่ยว", page_icon="✈️", layout="wide")
 
-st.title("✈️ ระบบ RAG แชตบอตผู้ช่วยแนะนำการท่องเที่ยว")
+st.title("✈️ ผู้ช่วยแนะนำการท่องเที่ยว")
 st.caption("ระบบแชตบอตอัจฉริยะที่ช่วยค้นหาและแนะนำข้อมูลสถานที่ท่องเที่ยว แผนการเดินทาง และรายละเอียดจากคลังเอกสาร")
 
 # Sidebar สำหรับจัดการระบบและเอกสาร
