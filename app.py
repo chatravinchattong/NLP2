@@ -138,11 +138,15 @@ if user_query := st.chat_input("พิมพ์คำถามการท่อ
     retriever = vector_store.as_retriever(search_kwargs={"k": 3})
     retrieved_docs = retriever.invoke(user_query)
 
+    api_key = st.secrets.get("GEMINI_API_KEY", "") or st.secrets.get("GOOGLE_API_KEY", "")
+    if api_key:
+    os.environ["GOOGLE_API_KEY"] = api_key
+    
     # เรียกใช้ Google Gemini 1.5 Flash Model
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
-        google_api_key=gemini_api_key,
-        temperature=0.2
+    model="gemini-1.5-flash",
+    api_key=api_key,
+    temperature=0.2
     )
 
     def format_docs(docs):
